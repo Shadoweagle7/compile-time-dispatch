@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Sandbox/Sandbox.csproj" />
+  <Project Path="SE7.Invocation.Dispatch.Static.SourceGeneration/SE7.Invocation.Dispatch.Static.SourceGeneration.csproj" />
+</Solution>
