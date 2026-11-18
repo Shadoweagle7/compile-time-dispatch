@@ -101,7 +101,7 @@ namespace SE7.Invocation.Dispatch.Static.SourceGeneration
 
                         namespace SE7.Invocation.Dispatch.Static
                         {
-                            [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+                            [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
                             internal sealed class VirtualAttribute : Attribute
                             {
                             }
@@ -138,7 +138,7 @@ namespace SE7.Invocation.Dispatch.Static.SourceGeneration
                         namespace SE7.Invocation.Dispatch.Static
                         {
                             [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-                            internal sealed class ImplementsAttribute<TBase> : Attribute
+                            internal sealed class ImplementsAttribute<TInterface> : Attribute
                             {
                             }
                         }
@@ -155,7 +155,7 @@ namespace SE7.Invocation.Dispatch.Static.SourceGeneration
 
                         namespace SE7.Invocation.Dispatch.Static
                         {
-                            [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+                            [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
                             internal sealed class OverrideAttribute : Attribute
                             {
                             }
@@ -175,7 +175,7 @@ namespace SE7.Invocation.Dispatch.Static.SourceGeneration
 
                         namespace SE7.Invocation.Dispatch.Static
                         {
-                            [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+                            [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
                             internal sealed class InterfaceImplementationAttribute : Attribute
                             {
                             }
@@ -193,7 +193,7 @@ namespace SE7.Invocation.Dispatch.Static.SourceGeneration
 
                         namespace SE7.Invocation.Dispatch.Static
                         {
-                            [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+                            [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
                             internal sealed class NewAttribute : Attribute
                             {
                             }
@@ -218,7 +218,109 @@ namespace SE7.Invocation.Dispatch.Static.SourceGeneration
                 static (sn, _) => sn is ClassDeclarationSyntax @class && @class.Modifiers.Any(SyntaxKind.PartialKeyword),
                 static (gasc, _) =>
                 {
+                    var symbolDisplayFormat = SymbolDisplayFormat.FullyQualifiedFormat.WithGlobalNamespaceStyle(SymbolDisplayGlobalNamespaceStyle.Omitted);
+
+                    if (
+#error TODO: CHECK ENTIRE INHERITANCE HIERARCHY
+                        ((INamedTypeSymbol)gasc.TargetSymbol).BaseType?
+                            .GetAttributes()
+                            .Any(ad => ad.AttributeClass?.ToDisplayString(symbolDisplayFormat) == "SE7.Invocation.Dispatch.Static.SealedAttribute") ?? false
+                    )
+                    {
+
+                    }
+
                     return new Class(gasc.TargetSymbol.Name, Class.ClassModifiers.Abstract);
+                }
+            ).Where(c => c is not null).Select((c, _) => c!);
+
+            var virtualPropertiesProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.VirtualAttribute",
+                static (sn, _) => sn is PropertyDeclarationSyntax,
+                static (gasc, _) =>
+                {
+                    return new Property(gasc.TargetSymbol.Name);
+                }
+            );
+
+            var virtualMethodsProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.VirtualAttribute",
+                static (sn, _) => sn is MethodDeclarationSyntax,
+                static (gasc, _) =>
+                {
+                    return new Method(gasc.TargetSymbol.Name);
+                }
+            );
+
+            var inheritsProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.InheritsAttribute`1",
+                static (sn, _) => sn is ClassDeclarationSyntax @class && @class.Modifiers.Any(SyntaxKind.PartialKeyword),
+                static (gasc, _) =>
+                {
+                    return new Class(gasc.TargetSymbol.Name, Class.ClassModifiers.None);
+                }
+            );
+
+            var implementsProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.ImplementsAttribute`1",
+                static (sn, _) => sn is ClassDeclarationSyntax @class && @class.Modifiers.Any(SyntaxKind.PartialKeyword),
+                static (gasc, _) =>
+                {
+                    return new Class(gasc.TargetSymbol.Name, Class.ClassModifiers.None);
+                }
+            );
+
+            var overrideMethodsProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.OverrideAttribute",
+                static (sn, _) => sn is MethodDeclarationSyntax,
+                static (gasc, _) =>
+                {
+                    return new Method(gasc.TargetSymbol.Name);
+                }
+            );
+
+            var overridePropertiesProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.OverrideAttribute",
+                static (sn, _) => sn is PropertyDeclarationSyntax,
+                static (gasc, _) =>
+                {
+                    return new Property(gasc.TargetSymbol.Name);
+                }
+            );
+
+            var methodInterfaceImplementationsProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.InterfaceImplementationAttribute",
+                static (sn, _) => sn is MethodDeclarationSyntax,
+                static (gasc, _) =>
+                {
+                    return new Method(gasc.TargetSymbol.Name);
+                }
+            );
+
+            var propertyInterfaceImplementationsProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.InterfaceImplementationAttribute",
+                static (sn, _) => sn is PropertyDeclarationSyntax,
+                static (gasc, _) =>
+                {
+                    return new Property(gasc.TargetSymbol.Name);
+                }
+            );
+
+            var newMethodProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.NewAttribute",
+                static (sn, _) => sn is MethodDeclarationSyntax,
+                static (gasc, _) =>
+                {
+                    return new Method(gasc.TargetSymbol.Name);
+                }
+            );
+
+            var newPropertyProvider = context.SyntaxProvider.ForAttributeWithMetadataName(
+                "SE7.Invocation.Dispatch.Static.NewAttribute",
+                static (sn, _) => sn is PropertyDeclarationSyntax,
+                static (gasc, _) =>
+                {
+                    return new Property(gasc.TargetSymbol.Name);
                 }
             );
         }
